@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Place</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    padding: 15px;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #10172f, #30245c, #123b50);
+    color: white;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+h1 { color: #61f5d1; }
+
+.card {
+    background: rgba(255,255,255,0.09);
+    padding: 22px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin: 15px 0 8px;
+}
+
+select, input, button {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+select, input {
+    border: none;
+    background: white;
+    color: #17203b;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.primary {
+    background: #61f5d1;
+    color: #102039;
+}
+
+.secondary {
+    background: #303c65;
+    color: white;
+}
+
+.hidden { display: none; }
+
+.info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.info div {
+    background: rgba(255,255,255,0.1);
+    padding: 12px 5px;
+    border-radius: 10px;
+}
+
+.info strong {
+    display: block;
+    margin-top: 6px;
+    color: #61f5d1;
+}
+
+.timer {
+    text-align: center;
+    font-size: 30px;
+    font-weight: bold;
+    color: #61f5d1;
+    margin: 20px;
+}
+
+.warning { color: #ff626f; }
+
+.progress-bg {
+    height: 8px;
+    background: #485071;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#progress {
+    height: 100%;
+    width: 0;
+    background: #61f5d1;
+}
+
+.question {
+    font-size: 22px;
+    line-height: 1.5;
+}
+
+.options {
+    display: grid;
+    gap: 10px;
+}
+
+.option {
+    background: white;
+    color: #17203b;
+    text-align: left;
+}
+
+.option:disabled { opacity: 1; }
+
+.correct {
+    background: #b9ffe3 !important;
+}
+
+.incorrect {
+    background: #ffd4d8 !important;
+}
+
+#feedback {
+    padding: 15px;
+    margin-top: 18px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    line-height: 1.6;
+}
+
+.result-score {
+    text-align: center;
+    font-size: 45px;
+    color: #61f5d1;
+    font-weight: bold;
+}
+
+.small {
+    color: #d0d8ed;
+    font-size: 14px;
+}
+
+footer {
+    text-align: center;
+    font-size: 13px;
+    margin: 25px 0;
+}
+
+@media(max-width:450px) {
+    h1 { font-size: 28px; }
+    .card { padding: 16px; }
+    .question { font-size: 19px; }
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <h1>LEARNING PLACE</h1>
+    <p>¡Poné a prueba tu inglés!</p>
+</header>
+
+<section id="menu" class="card">
+    <h2>Comenzar juego</h2>
+
+    <label for="playerName">Tu nombre</label>
+    <input id="playerName" placeholder="Escribí tu nombre">
+
+    <label for="level">Elegí el nivel</label>
+    <select id="level">
+        <option value="easy">Fácil (A1)</option>
+        <option value="medium">Intermedio (A2)</option>
+        <option value="hard">Difícil (B1)</option>
+        <option value="extreme">Extremo (B2)</option>
+    </select>
+
+    <label for="category">Elegí la categoría</label>
+    <select id="category">
+        <option value="all">Todas las categorías</option>
+        <option value="verbs">Verbos</option>
+        <option value="grammar">Gramática</option>
+        <option value="vocabulary">Palabras en inglés</option>
+        <option value="correction">Corregir oraciones</option>
+    </select>
+
+    <p class="small">
+        Cada partida tiene 10 preguntas. Elegí la respuesta antes de que termine el tiempo.
+    </p>
+
+    <button class="primary" onclick="startGame()">COMENZAR</button>
+</section>
+
+<section id="game" class="card hidden">
+    <div class="info">
+        <div>Nivel<strong id="levelLabel"></strong></div>
+        <div>Pregunta<strong id="questionNumber"></strong></div>
+        <div>Puntos<strong id="score">0</strong></div>
+    </div>
+
+    <div class="progress-bg">
+        <div id="progress"></div>
+    </div>
+
+    <div id="timer" class="timer">80 segundos</div>
+
+    <p id="categoryLabel" class="small"></p>
+    <h2 id="question" class="question"></h2>
+
+    <div id="options" class="options"></div>
+
+    <div id="feedback" class="hidden"></div>
+
+    <button id="nextButton" class="primary hidden" onclick="nextQuestion()">
+        SIGUIENTE
+    </button>
+</section>
+
+<section id="results" class="card hidden">
+    <h2 style="text-align:center;">RESULTADOS</h2>
+
+    <p id="resultName" style="text-align:center;"></p>
+    <div id="finalScore" class="result-score">0</div>
+    <p id="resultMessage" style="text-align:center;"></p>
+
+    <div class="info">
+        <div>Correctas<strong id="correctCount"></strong></div>
+        <div>Incorrectas<strong id="wrongCount"></strong></div>
+        <div>Nota<strong id="accuracy"></strong></div>
+    </div>
+
+    <button class="primary" onclick="restartGame()">JUGAR OTRA VEZ</button>
+    <button class="secondary" onclick="backToMenu()">VOLVER AL MENÚ</button>
+</section>
+
+<footer>Learning Place - Practicá y mejorá tu inglés.</footer>
+</div>
+
+<script>
+const levelTimes = {
+    easy: 80,
+    medium: 70,
+    hard: 60,
+    extreme: 50
+};
+
+const levelNames = {
+    easy: "Fácil (A1)",
+    medium: "Intermedio (A2)",
+    hard: "Difícil (B1)",
+    extreme: "Extremo (B2)"
+};
+
+const categoryNames = {
+    verbs: "Verbos",
+    grammar: "Gramática",
+    vocabulary: "Palabras en inglés",
+    correction: "Corregir oraciones"
+};
+
+/* 10 PREGUNTAS FÁCILES - NIVEL A1 */
+const easyQuestions = [
+{
+category:"verbs",
+question:"She _____ an apple every morning.",
+options:["eat","eats","eating","eated"],
+answer:1,
+explanation:"Con el sujeto 'she' en presente simple, el verbo lleva 's' (eats)."
+},
+{
+category:"grammar",
+question:"Choose the correct sentence.",
+options:["They is students.","They am students.","They are students.","They be students."],
+answer:2,
+explanation:"El pronombre 'they' utiliza siempre el verbo to be 'are'."
+},
+{
+category:"vocabulary",
+question:"What color is the sky on a clear day?",
+options:["Red","Blue","Green","Yellow"],
+answer:1,
+explanation:"'Blue' significa azul."
+},
+{
+category:"verbs",
+question:"I _____ a red car.",
+options:["has","have","haves","having"],
+answer:1,
+explanation:"Para la primera persona 'I' se utiliza 'have'."
+},
+{
+category:"grammar",
+question:"This is _____ book.",
+options:["my","I","me","mine"],
+answer:0,
+explanation:"Se usa el adjetivo posesivo 'my' antes del sustantivo 'book'."
+},
+{
+category:"vocabulary",
+question:",How do you say 'perro' in English?",
+options:["Cat","Dog","Bird","Fish"],
+answer:1,
+explanation:"Perro en inglés se dice 'dog'."
+},
+{
+category:"correction",
+question:"Choose the correct sentence.",
+options:["He no have a pen.","He don't have a pen.","He doesn't have a pen.","He not has a pen."],
+answer:2,
+explanation:"Para la tercera persona singular (he) en negación se usa 'doesn't have'."
+},
+{
+category:"verbs",
+question:"We _____ English now.",
+options:["study","studies","are studying","studied"],
+answer:2,
+explanation:"La palabra 'now' indica presente continuo: 'are studying'."
+},
+{
+category:"grammar",
+question:"There _____ three cats in the room.",
+options:["is","am","are","be"],
+answer:2,
+explanation:"Se utiliza 'are' porque 'three cats' está en plural."
+},
+{
+category:"vocabulary",
+question:"What number comes after ten?",
+options:["Nine","Eleven","Twelve","Twenty"],
+answer:1,
+explanation:"El número que sigue al diez es el once ('eleven')."
+}
+];
+
+/* 10 PREGUNTAS INTERMEDIAS - NIVEL A2 */
+const mediumQuestions = [
+{
+category:"verbs",
+question:"Yesterday, I _____ to the supermarket.",
+options:["go","goes","went","gone"],
+answer:2,
+explanation:"'Yesterday' indica pasado simple. El pasado irregular de 'go' es 'went'."
+},
+{
+category:"grammar",
+question:"My house is _____ than yours.",
+options:["big","bigger","biggest","more big"],
+answer:1,
+explanation:"Para comparar dos cosas con adjetivos cortos se añade '-er' (bigger)."
+},
+{
+category:"vocabulary",
+question:",What does 'weather' mean?",
+options:["Reloj","Tiempo / Clima","Zapato","Carretera"],
+answer:1,
+explanation:"'Weather' se refiere al estado del tiempo atmosférico o clima."
+},
+{
+category:"verbs",
+question:"While I was cooking, the phone _____.",
+options:["ring","rings","rang","ringing"],
+answer:2,
+explanation:"Se usa el pasado simple ('rang') para una acción corta que interrumpe otra en progreso."
+},
+{
+category:"grammar",
+question:"I have lived in this city _____ five years.",
+options:["since","for","during","from"],
+answer:1,
+explanation:"Se usa 'for' seguido de un período de duración de tiempo (five years)."
+},
+{
+category:"correction",
+question:"Choose the correct sentence.",
+options:["She can sings very well.","She can sing very well.","She cans sing very well.","She can to sing very well."],
+answer:1,
+explanation:"Después de un verbo modal como 'can', el verbo principal va en su forma base sin 'to'."
+},
+{
+category:"vocabulary",
+question:",What is the opposite of 'expensive'?",
+options:["Cheap","Tall","Cold","Happy"],
+answer:0,
+explanation:"El opuesto de costoso ('expensive') es barato ('cheap')."
+},
+{
+category:"verbs",
+question:"Next week, we _____ to Spain.",
+options:["travel","traveled","are traveling","travels"],
+answer:2,
+explanation:"El presente continuo ('are traveling') se usa comúnmente para planes futuros cercanos."
+},
+{
+category:"grammar",
+question:"She is the _____ girl in the class.",
+options:["tall","taller","tallest","more tall"],
+answer:2,
+explanation:"Para superlativo con adjetivos cortos se utiliza 'the' + adjetivo con '-est'."
+},
+{
+category:"correction",
+question:"Choose the correct sentence.",
+options:["I am agree with you.","I agree with you.","I am agreeing with you.","I agreeing with you."],
+answer:1,
+explanation:"El verbo 'agree' (estar de acuerdo) no se suele usar en tiempos continuos en este contexto."
+}
+];
+
+/* 10 PREGUNTAS DIFÍCILES - NIVEL B1 */
+const hardQuestions = [
+{
+category:"grammar",
+question:"Hardly _____ the room when the lights went out.",
+options:["I had entered","had I entered","I entered","did I had entered"],
+answer:1,
+explanation:"'Hardly' al inicio de la oración requiere inversión gramatical (had + sujeto + participio)."
+},
+{
+category:"verbs",
+question:"If I had more time, I _____ learn to play the guitar.",
+options:["will","would","can","had"],
+answer:1,
+explanation:"Este es un segundo condicional (situación hipotética en el presente), se usa 'would' + verbo base."
+},
+{
+category:"vocabulary",
+question:",What does 'reliable' mean?",
+options:["Que se puede confiar","Muy rápido","Poco claro","Aburrido"],
+answer:0,
+explanation:"'Reliable' describe a una persona o cosa en la que se puede confiar (fidedigno/confiable)."
+},
+{
+category:"correction",
+question:"Choose the correct sentence.",
+options:["She is used to wake up early.","She is used to waking up early.","She used to waking up early.","She use to waking up early."],
+answer:1,
+explanation:"La estructura 'to be used to' va seguida obligatoriamente de un verbo con terminación '-ing'."
+},
+{
+category:"grammar",
+question:"The book _____ by a famous author last year.",
+options:[,"was written","is written","wrote","has written"],
+answer:0,
+explanation:"Es una oración en voz pasiva en pasado simple ('was written')."
+},
+{
+category:"verbs",
+question:"By the time she arrived, we _____ dinner.",
+options:["finish","finished","had finished","have finished"],
+answer:2,
+explanation:"Se usa el pasado perfecto ('had finished') para una acción completada antes de otra en el pasado."
+},
+{
+category:"vocabulary",
+question:",What does 'achieve' mean?",
+options:["Fracasar","Lograr o alcanzar","Esconder","Comenzar"],
+answer:1,
+explanation:"'Achieve' significa conseguir o alcanzar una meta u objetivo."
+},
+{
+category:"grammar",
+question:"I wish I _____ drive a car.",
+options:["can","could","will","have"],
+answer:1,
+explanation:"Para expresar deseos sobre habilidades o situaciones actuales que no se poseen, se usa 'wish' + 'could'."
+},
+{
+category:"correction",
+question:"Choose the correct sentence.",
+options:["He suggested to go to the cinema.","He suggested going to the cinema.","He suggested us go to the cinema.","He suggested that go to the cinema."],
+answer:1,
+explanation:"Después del verbo 'suggest' se utiliza el gerundio ('going') cuando no va seguido de un sujeto directo."
+},
+{
+category:"grammar",
+question:"This is the restaurant _____ we had our first date.",
+options:["which","where","who","whose"],
+answer:1,
+explanation:"Se utiliza el pronombre relativo 'where' para hacer referencia a un lugar."
+}
+];
+
+/* 10 PREGUNTAS EXTREMAS - NIVEL B2 */
+const extremeQuestions = [
+{
+category:"grammar",
+question:"No sooner _____ the office than the phone started ringing.",
+options:["had he left","he had left","did he leave","he left"],
+answer:0,
+explanation:"'No sooner' al principio de la oración exige inversión con pasado perfecto (had + sujeto + participio)."
+},
+{
+category:"vocabulary",
+question:",What does 'ambiguous' mean?",
+options:["Muy claro y directo","Con más de una interpretación posible","De gran tamaño","Sin importancia"],
+answer:1,
+explanation:"'Ambiguous' se refiere a algo que puede entenderse de varias maneras o que es poco preciso."
+},
+{
+category:"grammar",
+question:"Seldom _____ such a breathtaking performance.",
+options:["I have seen","have I seen","I saw","did I saw"],
+answer:1,
+explanation:"Los adverbios de sentido negativo como 'seldom' al inicio exigen inversión del auxiliar y sujeto."
+},
+{
+category:"verbs",
+question:"Had the authorities acted sooner, the crisis _____ avoided.",
+options:["might have been","might be","might have","might had been"],
+answer:0,
+explanation:"Tercera condicional invertida. Se usa 'might have been' + participio para una especulación pasada."
+},
+{
+category:"vocabulary",
+question:",What does 'mitigate' mean?",
+options:["Aumentar o empeorar","Reducir la gravedad o severidad de algo","Ocultar información","Prohibir por ley"],
+answer:1,
+explanation:"'Mitigate' significa aminorar, mitigar o suavizar un daño o problema."
+},
+{
+category:"correction",
+question:"Choose the correct sentence regarding inversion and emphasis.",
+options:[,"Little did he know what was waiting for him.","Little he knew what was waiting for him.","Little did he knew what was waiting for him.","Little he did know what was waiting for him."],
+answer:0,
+explanation:"Tras 'Little' al inicio, se usa inversión con auxiliar en pasado ('did') y el verbo en forma base ('know')."
+},
+{
+category:"grammar",
+question:"It is vital that every candidate _____ present at the meeting.",
+options:["is","be","are","were"],
+answer:1,
+explanation:"Uso del subjuntivo en inglés (mandative subjunctive) tras expresiones de necesidad, usando la forma base ('be')."
+},
+{
+category:"vocabulary",
+question:",What does 'ubiquitous' mean?",
+options:["Muy extraño o raro","Presente en todas partes al mismo tiempo","Difícil de comprender","Innecesario"],
+answer:1,
+explanation:"'Ubiquitous' (ubicuo) describe algo que parece estar presente en todas partes."
+},
+{
+category:"grammar",
+question:"Supposing _____ the job offer, where would you live?",
+options:["you accept","you accepted","you will accept","you would accept"],
+answer:1,
+explanation:"'Supposing' (o supposing that) introduce hipótesis y suelen ir seguidos de pasado simple para situaciones irreales."
+},
+{
+category:"correction",
+question:"Choose the grammatically correct sentence with a cleft structure.",
+options:[,"It was the weather that ruined our trip.","It were the weather what ruined our trip.","It was the weather which ruin our trip.","It is the weather what ruined our trip."],
+answer:0,
+explanation:"Estructura enfática (cleft sentence): 'It was [elemento] that...' empleando correctamente el pasado en todo el bloque."
+}
+];
+
+const questionBanks = {
+    easy: easyQuestions,
+    medium: mediumQuestions,
+    hard: hardQuestions,
+    extreme: extremeQuestions
+};
+
+let gameQuestions = [];
+let currentQuestion = 0;
+let score = 0;
+let correctAnswers = 0;
+let wrongAnswers = 0;
+let timeLeft = 80;
+let timerInterval = null;
+let locked = false;
+let selectedLevel = "easy";
+let selectedCategory = "all";
+let player = "Jugador";
+
+function shuffle(array) {
+    const copy = [...array];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+}
+
+function startGame() {
+    clearInterval(timerInterval);
+
+    selectedLevel = document.getElementById("level").value;
+    selectedCategory = document.getElementById("category").value;
+    player = document.getElementById("playerName").value.trim() || "Jugador";
+
+    let bank = questionBanks[selectedLevel];
+
+    if (selectedCategory !== "all") {
+        bank = bank.filter(q => q.category === selectedCategory);
+    }
+
+    /*
+    Siempre se eligen 10 preguntas.
+    Si se elige una categoría, se mezclan preguntas de esa categoría
+    con otras del mismo nivel para completar las 10.
+    */
+    const otherQuestions = questionBanks[selectedLevel].filter(
+        q => !bank.includes(q)
+    );
+
+    gameQuestions = shuffle([
+        ...shuffle(bank),
+        ...shuffle(otherQuestions)
+    ]).slice(0, 10);
+
+    currentQuestion = 0;
+    score = 0;
+    correctAnswers = 0;
+    wrongAnswers = 0;
+
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("results").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    document.getElementById("levelLabel").textContent =
+        levelNames[selectedLevel];
+
+    showQuestion();
+}
+
+function showQuestion() {
+    clearInterval(timerInterval);
+    locked = false;
+
+    const q = gameQuestions[currentQuestion];
+
+    document.getElementById("questionNumber").textContent =
+        (currentQuestion + 1) + "/10";
+
+    document.getElementById("score").textContent = score;
+
+    document.getElementById("progress").style.width =
+        (currentQuestion / 10 * 100) + "%";
+
+    document.getElementById("categoryLabel").textContent =
+        "Categoría: " + categoryNames[q.category];
+
+    document.getElementById("question").textContent = q.question;
+
+    document.getElementById("feedback").classList.add("hidden");
+    document.getElementById("nextButton").classList.add("hidden");
+
+    const optionsBox = document.getElementById("options");
+    optionsBox.innerHTML = "";
+
+    q.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.className = "option";
+        button.textContent =
+            String.fromCharCode(65 + index) + ". " + option;
+
+        button.onclick = () => answerQuestion(index);
+
+        optionsBox.appendChild(button);
+    });
+
+    timeLeft = levelTimes[selectedLevel];
+    updateTimer();
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timeExpired();
+        }
+    }, 1000);
+}
+
+function updateTimer() {
+    const timer = document.getElementById("timer");
+    timer.textContent = timeLeft + " segundos";
+    timer.classList.toggle("warning", timeLeft <= 10);
+}
+
+function timeExpired() {
+    if (locked) return;
+
+    locked = true;
+    wrongAnswers++;
+
+    const q = gameQuestions[currentQuestion];
+    const buttons = document.querySelectorAll(".option");
+
+    buttons.forEach((button, index) => {
+        button.disabled = true;
+
+        if (index === q.answer) {
+            button.classList.add("correct");
+        }
+    });
+
+    showFeedback(
+        "Se acabó el tiempo. La respuesta correcta era: " +
+        q.options[q.answer] + ". " + q.explanation
+    );
+
+    prepareNextButton();
+}
+
+function answerQuestion(index) {
+    if (locked) return;
+
+    locked = true;
+    clearInterval(timerInterval);
+
+    const q = gameQuestions[currentQuestion];
+    const buttons = document.querySelectorAll(".option");
+
+    buttons.forEach(button => button.disabled = true);
+
+    if (index === q.answer) {
+        correctAnswers++;
+
+        const points = {
+            easy: 10,
+            medium: 20,
+            hard: 30,
+            extreme: 100
+        };
+
+        const bonus = Math.floor(timeLeft / 10);
+        score += points[selectedLevel] + bonus;
+
+        buttons[index].classList.add("correct");
+
+        showFeedback(
+            "¡Muy bien! Ganaste " + points[selectedLevel] +
+            " puntos y " + bonus + " puntos extra. " + q.explanation
+        );
+    } else {
+        wrongAnswers++;
+
+        buttons[index].classList.add("incorrect");
+        buttons[q.answer].classList.add("correct");
+
+        showFeedback(
+            "Respuesta incorrecta. La respuesta correcta era: " +
+            q.options[q.answer] + ". " + q.explanation
+        );
+    }
+
+    document.getElementById("score").textContent = score;
+    prepareNextButton();
+}
+
+function showFeedback(message) {
+    const feedback = document.getElementById("feedback");
+    feedback.textContent = message;
+    feedback.classList.remove("hidden");
+}
+
+function prepareNextButton() {
+    const button = document.getElementById("nextButton");
+    button.classList.remove("hidden");
+
+    button.textContent =
+        currentQuestion === 9 ? "VER RESULTADOS" : "SIGUIENTE PREGUNTA";
+}
+
+function nextQuestion() {
+    clearInterval(timerInterval);
+    currentQuestion++;
+
+    if (currentQuestion >= 10) {
+        showResults();
+    } else {
+        showQuestion();
+    }
+}
+
+function showResults() {
+    clearInterval(timerInterval);
+
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("results").classList.remove("hidden");
+
+    const accuracy = Math.round(correctAnswers / 10 * 100);
+
+    document.getElementById("resultName").textContent =
+        player + " - Nivel " + levelNames[selectedLevel];
+
+    document.getElementById("finalScore").textContent =
+        score + " puntos";
+
+    document.getElementById("correctCount").textContent = correctAnswers;
+    document.getElementById("wrongCount").textContent = wrongAnswers;
+    document.getElementById("accuracy").textContent = accuracy + "%";
+
+    let message;
+
+    if (accuracy === 100) {
+        message = "¡Perfecto! Respondiste las 10 preguntas bien.";
+    } else if (accuracy >= 80) {
+        message = "¡Excelente trabajo!";
+    } else if (accuracy >= 60) {
+        message = "¡Vas muy bien! Seguí practicando.";
+    } else if (accuracy >= 40) {
+        message.textContent = "Buen intento. Podés mejorar practicando.";
+    } else {
+        message = "Seguí practicando y volvé a intentarlo.";
+    }
+
+    document.getElementById("resultMessage").textContent = message;
+    document.getElementById("progress").style.width = "100%";
+}
+
+function restartGame() {
+    startGame();
+}
+
+function backToMenu() {
+    clearInterval(timerInterval);
+    document.getElementById("results").classList.add("hidden");
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("menu").classList.remove("hidden");
+}
+</script>
+</body>
+</html>
